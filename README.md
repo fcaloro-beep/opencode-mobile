@@ -5,6 +5,14 @@
 > Android updates automatically. Android always requires the user to confirm
 > installation of a downloaded APK.
 
+## Automated Android releases
+
+Run the `Android Release` workflow with `release_version` set to the desired
+semantic version, for example `1.2.0`. The workflow validates the source,
+tests the current OpenCode SDK contract, builds and signs APK/AAB files, and
+publishes the matching GitHub release. Installed Android builds check that
+release feed once per day and also expose a manual check in Settings.
+
 Mobile client for OpenCode, built with Expo and React Native.
 
 ## Requirements
