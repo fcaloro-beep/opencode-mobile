@@ -9,8 +9,6 @@ on:
         default: false
         type: boolean
   push:
-    branches:
-      - main
     tags:
       - 'v*'
 
@@ -18,7 +16,7 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     env:
       EXPO_APP_VARIANT: production
@@ -64,6 +62,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate source
+        run: npm run test:ci:static
+
+      - name: Install browser for end-to-end tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Run application tests
+        run: |
+          npm run test:fake-server:self
+          npm run test:e2e:web
+
+      - name: Derive app version from tag
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+        shell: bash
+        run: echo "EXPO_APP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
       - name: Decode keystore & verify
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -108,7 +122,7 @@ jobs:
             android/app/build/outputs/**/*.apk
 
       - name: Setup Ruby
-        if: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && inputs.upload_to_play_store) }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_to_play_store }}
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.3
@@ -125,7 +139,7 @@ jobs:
       #     status: completed
 
       - name: Upload to Play Store (internal)
-        if: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && inputs.upload_to_play_store) }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_to_play_store }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
@@ -133,3 +147,12 @@ jobs:
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
           status: completed
+
+      - name: Publish GitHub release
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab

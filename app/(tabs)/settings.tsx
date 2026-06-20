@@ -11,6 +11,7 @@ import {
 
 import { Colors } from '@/constants/theme';
 import { ProviderConfigDialog } from '@/components/settings/provider-config-dialog';
+import { UpdateSection } from '@/components/settings/update-section';
 import {
   AiDefaultsSection,
   ConnectionSection,
@@ -31,6 +32,8 @@ import {
 } from '@/lib/notifications';
 import { getSpeechVoiceOptions, type SpeechVoiceOption } from '@/lib/voice/speech-output';
 import { useOpencode } from '@/providers/opencode-provider';
+
+// Modified by fcaloro-beep: expose update status and manual update checks.
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -358,6 +361,7 @@ export default function SettingsScreen() {
           onRefreshStatus={() => void refreshNotificationStatus()}
           palette={palette}
         />
+        <UpdateSection palette={palette} />
         <VoiceSection
           availableSpeechVoices={availableSpeechVoices}
           chatPreferences={chatPreferences}

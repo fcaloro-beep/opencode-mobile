@@ -1,6 +1,8 @@
 import type { ExpoConfig } from 'expo/config';
 
-function env(name: string) {
+// Modified by fcaloro-beep: versioned self-update builds and a separate Android package.
+
+function env(name: string): string | undefined {
   const value = process.env[name]?.trim();
   return value ? value : undefined;
 }
@@ -9,15 +11,18 @@ const appVariant = env('EXPO_APP_VARIANT') ?? 'production';
 const isDevelopmentVariant = appVariant === 'development';
 const isE2EMode = env('EXPO_PUBLIC_E2E_MODE') === '1';
 const e2eServerUrl = env('EXPO_PUBLIC_E2E_SERVER_URL');
-const defaultAndroidPackage = 'app.getopencode';
+const defaultAndroidPackage = 'com.fcaloro.opencodemobile';
 const releaseAndroidPackage = env('EXPO_ANDROID_PACKAGE') ?? defaultAndroidPackage;
 const developmentAndroidPackage = env('EXPO_ANDROID_PACKAGE_DEV') ?? `${releaseAndroidPackage}.dev`;
 const androidPackage = isDevelopmentVariant ? developmentAndroidPackage : releaseAndroidPackage;
+const appVersion = env('EXPO_APP_VERSION') ?? '1.1.0';
+const [versionMajor, versionMinor, versionPatch] = appVersion.split('.').map((part: string) => Number.parseInt(part, 10) || 0);
+const androidVersionCode = versionMajor * 1_000_000 + versionMinor * 1_000 + versionPatch;
 
 const config: ExpoConfig = {
-  name: isDevelopmentVariant ? 'OpenCode Mobile Dev' : 'OpenCode Mobile',
-  slug: 'opencode-mobile',
-  version: '1.0.2',
+  name: isDevelopmentVariant ? 'OpenCode Mobile Auto Dev' : 'OpenCode Mobile Auto',
+  slug: 'opencode-mobile-auto',
+  version: appVersion,
   orientation: 'portrait',
   splash: {
     image: "./assets/images/splash.png",
@@ -30,6 +35,7 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   android: {
     package: androidPackage,
+    versionCode: androidVersionCode,
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: "#202020"
@@ -74,6 +80,7 @@ const config: ExpoConfig = {
     router: {},
     e2eMode: isE2EMode,
     e2eServerUrl,
+    updateRepository: env('EXPO_PUBLIC_UPDATE_REPOSITORY') ?? 'fcaloro-beep/opencode-mobile',
   },
 };
 

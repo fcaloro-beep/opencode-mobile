@@ -1,0 +1,8 @@
+OpenCode Mobile Auto
+Copyright 2026 fcaloro-beep
+
+This product is derived from OpenCode Mobile by Alvaro Lorente and contributors:
+https://github.com/alvarolorentedev/opencode-mobile
+
+Changes include OpenCode SDK compatibility updates, defensive API response
+handling, automated release publishing, and Android update discovery.

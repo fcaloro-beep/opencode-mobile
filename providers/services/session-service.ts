@@ -1,4 +1,11 @@
-import type { Project } from '@/lib/opencode/types';
+import type { SessionMessageRecord } from '@/lib/opencode/format';
+import type { FileDiff, Project, Todo } from '@/lib/opencode/types';
+
+// Modified by fcaloro-beep: tolerate API shape drift across OpenCode releases.
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value : [];
+}
 
 export async function loadWorkspaceCatalog(catalogClient: any) {
   const [pathResponse, projectsResponse, currentProjectResponse] = await Promise.all([
@@ -7,7 +14,7 @@ export async function loadWorkspaceCatalog(catalogClient: any) {
     catalogClient.project.current().catch(() => undefined),
   ]);
 
-  const discoveredProjects = projectsResponse?.data || [];
+  const discoveredProjects = asArray<Project>(projectsResponse?.data);
   const currentProject = currentProjectResponse?.data;
   const dedupedProjects = new Map<string, Project>();
 
@@ -25,7 +32,7 @@ export async function loadWorkspaceCatalog(catalogClient: any) {
 
   return {
     currentProjectPath: currentProject?.worktree,
-    serverRootPath: pathResponse.data.directory,
+    serverRootPath: pathResponse?.data?.directory,
     serverProjects: nextProjects,
   };
 }
@@ -33,21 +40,22 @@ export async function loadWorkspaceCatalog(catalogClient: any) {
 export async function listSessions(client: any) {
   const [sessionsResponse, statusesResponse] = await Promise.all([client.session.list(), client.session.status()]);
 
-  const nextSessions = [...sessionsResponse.data].sort((left: any, right: any) => right.time.updated - left.time.updated);
-  return { sessions: nextSessions, statuses: statusesResponse.data };
+  const nextSessions = asArray<any>(sessionsResponse?.data)
+    .sort((left: any, right: any) => (right.time?.updated || 0) - (left.time?.updated || 0));
+  return { sessions: nextSessions, statuses: statusesResponse?.data || {} };
 }
 
 export async function getSessionMessages(client: any, sessionId: string) {
   const response = await client.session.messages({ path: { id: sessionId } });
-  return response.data;
+  return asArray<SessionMessageRecord>(response?.data);
 }
 
 export async function getSessionDiff(client: any, sessionId: string) {
   const response = await client.session.diff({ path: { id: sessionId } });
-  return response.data;
+  return asArray<FileDiff>(response?.data);
 }
 
 export async function getSessionTodos(client: any, sessionId: string) {
   const response = await client.session.todo({ path: { id: sessionId } });
-  return response.data;
+  return asArray<Todo>(response?.data);
 }

@@ -1,5 +1,10 @@
 # OpenCode Mobile
 
+> This fork is maintained by `fcaloro-beep`. It tracks current OpenCode SDK
+> releases, validates server response shapes, and checks GitHub Releases for
+> Android updates automatically. Android always requires the user to confirm
+> installation of a downloaded APK.
+
 Mobile client for OpenCode, built with Expo and React Native.
 
 ## Requirements

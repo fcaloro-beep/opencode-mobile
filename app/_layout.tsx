@@ -12,6 +12,8 @@ import { getPaperTheme } from '@/constants/paper-theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { OpencodeProvider } from '@/providers/opencode-provider';
 
+// Modified by fcaloro-beep: initialize the GitHub Releases update check.
+
 export const unstable_settings = {
   anchor: '(tabs)',
 };
@@ -32,6 +34,10 @@ export default function RootLayout() {
 
     void import('@/lib/voice/speech-output')
       .then(({ initializeVoiceAudioAsync }) => initializeVoiceAudioAsync())
+      .catch(() => undefined);
+
+    void import('@/lib/updates/auto-update')
+      .then(({ initializeAutomaticUpdateCheck }) => initializeAutomaticUpdateCheck())
       .catch(() => undefined);
   }, [isE2EMode]);
 
