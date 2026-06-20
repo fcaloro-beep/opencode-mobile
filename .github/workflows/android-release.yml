@@ -3,6 +3,10 @@ name: Android Release
 on:
   workflow_dispatch:
     inputs:
+      release_version:
+        description: Version to publish, without the leading v (leave empty for an artifact-only build)
+        required: false
+        type: string
       upload_to_play_store:
         description: Upload the generated bundle to Google Play
         required: false
@@ -70,10 +74,19 @@ jobs:
           npm run test:fake-server:self
           npm run test:sdk-contract
 
-      - name: Derive app version from tag
-        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+      - name: Derive release version
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.release_version != '' }}
         shell: bash
-        run: echo "EXPO_APP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+        env:
+          REQUESTED_VERSION: ${{ inputs.release_version }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$REQUESTED_VERSION"
+          fi
+          echo "EXPO_APP_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v$VERSION" >> "$GITHUB_ENV"
 
       - name: Decode keystore & verify
         env:
@@ -146,10 +159,11 @@ jobs:
           status: completed
 
       - name: Publish GitHub release
-        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ env.RELEASE_TAG != '' }}
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          tag_name: ${{ env.RELEASE_TAG }}
           files: |
             android/app/build/outputs/apk/release/app-release.apk
             android/app/build/outputs/bundle/release/app-release.aab
