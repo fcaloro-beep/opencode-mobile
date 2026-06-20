@@ -65,13 +65,10 @@ jobs:
       - name: Validate source
         run: npm run test:ci:static
 
-      - name: Install browser for end-to-end tests
-        run: npx playwright install --with-deps chromium
-
       - name: Run application tests
         run: |
           npm run test:fake-server:self
-          npm run test:e2e:web
+          npm run test:sdk-contract
 
       - name: Derive app version from tag
         if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
